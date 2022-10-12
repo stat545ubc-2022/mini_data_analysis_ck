@@ -6,4 +6,4 @@ This is a public repository that contains all the necessary files required for t
 This includes:\
 - Mini Data Analysis.rmd\
 - Mini Data Analysis.md\
-- Mini Data Analysis Files and Figures
+- Mini Data Analysis Files and Figures 
