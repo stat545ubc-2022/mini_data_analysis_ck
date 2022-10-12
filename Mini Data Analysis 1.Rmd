@@ -1,6 +1,6 @@
 ---
 title: "Mini Data-Analysis Deliverable 1"
-output: html_document
+output: github_document
 ---
 
 # Welcome to your (maybe) first-ever data analysis project!
@@ -17,11 +17,11 @@ And hopefully the first of many. Let's get started:
 2.  Load the packages below.
 
 ```{r}
-library(datateachr)
-library(tidyverse)
+suppressPackageStartupMessages(library(datateachr))
+suppressPackageStartupMessages(library(tidyverse))
 ```
 
-3.  Make a repository in the <https://github.com/stat545ubc-2022> Organization. You will be working with this repository for the entire data analysis project. You can either make it public, or make it private and add the TA's and Lucy as collaborators. A link to help you create a private repository is available on the #collaborative-project Slack channel. 
+3.  Make a repository in the <https://github.com/stat545ubc-2022> Organization. You will be working with this repository for the entire data analysis project. You can either make it public, or make it private and add the TA's and Lucy as collaborators. A link to help you create a private repository is available on the #collaborative-project Slack channel.
 
 # Instructions
 
@@ -80,10 +80,12 @@ And that is exactly the first thing that you will do!
 
 <!-------------------------- Start your work below ---------------------------->
 
-1: CHOICE_1\_HERE\
-2: CHOICE_2\_HERE\
-3: CHOICE_3\_HERE\
-4: CHOICE_4\_HERE
+#### Initial Choices
+
+1: cancer_sample\
+2: vancouver_trees\
+3: apt_buildings\
+4: parking_meters
 
 <!----------------------------------------------------------------------------->
 
@@ -93,10 +95,49 @@ And that is exactly the first thing that you will do!
 
 <!-------------------------- Start your work below ---------------------------->
 
+#### Cancer Sample
+
 ```{r}
-### EXPLORE HERE ###
-steam_games
+glimpse(cancer_sample)
+sum(is.na(cancer_sample)) #in addition to dataset attributes, this looks at the total number of na's
 ```
+
+Cancer sample contains:\
+- 569 rows, 32 columns\
+- 0 NA's, mostly numeric data
+
+#### Vancouver Tree's Dataset
+
+```{r}
+glimpse(vancouver_trees)
+sum(is.na(vancouver_trees))
+```
+
+This dataset contains:\
+- 146,611 rows, 20 columns\
+- 191135 NA's, mostly character variables
+
+#### Apartment Buildings Dataset
+
+```{r}
+glimpse(apt_buildings)
+sum(is.na(apt_buildings))
+```
+
+This dataset contains:\
+- 3,455 rows, 37 columns\
+- 6286 NA's, a number of dichotomous variables
+
+#### Parking Meters Dataset
+
+```{r}
+glimpse(parking_meters)
+sum(is.na(parking_meters))
+```
+
+This dataset contains:\
+- 10,032 rows, 2 columns\
+- 19096 NA's, multiple variables with nonsense names
 
 <!----------------------------------------------------------------------------->
 
@@ -104,13 +145,32 @@ steam_games
 
 <!-------------------------- Start your work below ---------------------------->
 
+**Final 2 choices:**\
+- Cancer sample\
+- Apartment Buildings\
+*This was mostly predicated on the number of NA's in each dataset but the parking meter dataset had a number of unclear variable names as well as observations that might have required separating out a lot of strings.*
+
 <!----------------------------------------------------------------------------->
 
 1.4 Time for the final decision! Going back to the beginning, it's important to have an *end goal* in mind. For example, if I had chosen the `titanic` dataset for my project, I might've wanted to explore the relationship between survival and other variables. Try to think of 1 research question that you would want to answer with each dataset. Note them down below, and make your final choice based on what seems more interesting to you!
 
 <!-------------------------- Start your work below ---------------------------->
 
-<!----------------------------------------------------------------------------->
+1.  *Cancer Sample*
+
+-   What's the relationship of texture and symmetry to diagnosis?
+
+2.  *Vancouver Trees*
+
+-   Are there more of a particular tree genus in particular neighbourhoods?
+
+3.  *Apartment Buildings*
+
+-   Are buildings that have elevators more likely to allow pets?
+
+4.  *Parking Meters*
+
+-   Do meters that use credit cards appear in particular areas? <!----------------------------------------------------------------------------->
 
 # Important note
 
@@ -137,6 +197,62 @@ If we rewind and go back to the learning objectives, you'll see that by the end 
 
 <!-------------------------- Start your work below ---------------------------->
 
+### 2.1 - Data Exploration
+
+#### 1.Distribution of the smoothness variable
+
+This plot gives a sense of what this variable looks like as the dataset has many, many rows. We can easily see if the distribution is unimodal or multimodal and formulate questions around that.
+
+```{r}
+smoothness_dist<- cancer_sample %>%
+  ggplot(aes(x=smoothness_mean)) +
+  geom_histogram(aes(y=..density..), bins = 30, colour = "black", fill = "white") +
+  geom_density(alpha=.2, colour = "red") +
+  scale_x_continuous(breaks = scales::breaks_width(0.0125)) +
+  labs(y="Density", x="Smoothness")
+smoothness_dist
+```
+
+#### 2. Relationship between radius and smoothness
+
+This quick scatterplot gives an indication of the relationship between two of the variables to see if there's a question to be asked about either (or both) of them.
+
+```{r}
+smooth_v_rad<- cancer_sample %>%
+  ggplot(aes(x=smoothness_mean, y=radius_mean)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(y="Radius", x="Smoothness")
+smooth_v_rad
+```
+
+#### 3. Select relevant attributes
+
+This is a large, numeric dataset so selecting out a few of the attributes helps narrow down the questions and focus the analysis.
+
+```{r}
+cancer_compact<- cancer_sample %>%
+  select(starts_with(c("ID", "diagnosis", "radius", "texture", "smoothness"))) %>%
+  rename(radius=radius_mean, texture=texture_mean, smoothness=smoothness_mean)
+head(cancer_compact)
+```
+
+#### 4. Radius density plot
+
+Like #1, this just shows the distribution of another potential variable with the mean and median included so we can see the influence of any outliers.
+
+```{r}
+texture_density<- cancer_compact %>%
+  ggplot(aes(x=texture, y=..density..)) +
+  geom_density() +
+  geom_vline(aes(xintercept=mean(texture)),
+            color="red", linetype="dashed", size=0.8, alpha=0.5) +
+  geom_vline(aes(xintercept=median(texture)),
+            color="blue", linetype="dashed", size=0.8, alpha=0.5) +
+  labs(y="Texture", x="Radius", caption = "Red dashed line indicates variable mean, blue indiciates the median")
+texture_density
+```
+
 <!----------------------------------------------------------------------------->
 
 # Task 3: Write your research questions (5 points)
@@ -144,6 +260,22 @@ If we rewind and go back to the learning objectives, you'll see that by the end 
 So far, you have chosen a dataset and gotten familiar with it through exploring the data. Now it's time to figure out 4 research questions that you would like to answer with your data! Write the 4 questions and any additional comments at the end of this deliverable. These questions are not necessarily set in stone - TAs will review them and give you feedback; therefore, you may choose to pursue them as they are for the rest of the project, or make modifications!
 
 <!--- *****START HERE***** --->
+
+### Cell attributes and diagnosis
+
+These 3 questions will explore the relationship between physical attributes and diagnosis.
+
+**1. Is radius, texture, or smoothness a better predictor of a malignant diagnosis?**
+
+**2. What is the relationship between cancer cell size (smoothness and radius) and diagnosis?**
+
+**3. What is the relationship between cell texture and diagnosis?**
+
+### Relationships between cell attributes
+
+This question is a general question about how the attributes are related.
+
+**4. How are the 3 attributes related to each other?**
 
 # Task 4: Process and summarize your data (13 points)
 
@@ -173,6 +305,112 @@ Make sure it's clear what research question you are doing each operation for!
 
 <!------------------------- Start your work below ----------------------------->
 
+#### 1. Is radius, texture, or smoothness a better predictor of a malignant diagnosis?
+
+**Summarize option 3:** *3 numeric variables were transformed into a categorical variable with 3 groups to make plotting easier.*
+
+```{r}
+vars_long<- cancer_compact %>%
+  pivot_longer(cols = c("radius", "texture", "smoothness"), 
+               names_to = "attribute", values_to = "average") %>%
+  select(c("ID", "diagnosis", "attribute", "average"))
+vars_long
+  
+```
+
+**Graphing option 5:** *A simple bar plot with the each datapoint overlaid for a quick visual on how each attribute contributes to diagnosis.*
+
+```{r}
+vars_plot<- vars_long %>%
+  ggplot(aes(attribute, average, fill=diagnosis)) +
+  geom_bar(fun="mean", stat="summary", position="dodge") +
+  geom_point(position=position_jitterdodge(dodge.width=0.9), alpha=0.2)
+vars_plot
+```
+
+#### 2. What is the relationship between cancer cell size (smoothness and radius) and diagnosis?
+
+**Summarize option 1:** *One of the 'size' attributes is summarized across diagnosis for a quick visual numeric comparison, to provide a dataframe for future stats, and to provide a dataframe for the following plot.*
+
+```{r}
+#head(cancer_compact)
+rad_sum<- cancer_compact %>%
+  group_by(diagnosis) %>%
+  summarize(mean=mean(radius), median=median(radius), 
+            sd=sd(radius), min=min(radius), max=max(radius))
+rad_sum
+
+```
+
+**Graphing option 5:** *A simple bar graph is used for easy visual comparison of radius means per diagnosis.*
+
+```{r}
+rad_diagnosis_plot<- rad_sum %>%
+  ggplot(aes(diagnosis, mean)) +
+  geom_bar(stat="identity", width=0.5) +
+  geom_errorbar(aes(ymin=mean-sd, ymax=mean+sd), width=.2) +
+  scale_y_continuous(expand = c(0, 0), limits = c(0, 25)) +
+  labs(y = "Radius", x = "Diagnosis") + 
+  scale_x_discrete(labels = c("Benign", "Malignant")) +
+  theme(axis.title = element_text(size = 12, face = "bold")) +
+  theme(axis.text = element_text(face = "bold")) +
+  theme(panel.background = element_blank()) + 
+  theme(panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank()) +
+  theme(axis.line = element_line(colour = "black", size = 0.5))
+rad_diagnosis_plot
+```
+
+#### 3. What is the relationship between cell texture and diagnosis?
+
+**Summarize option 1:** *Again, the first option was the most useful option here but the mean of the other attributes were kept in the dataframe to keep texture within the context of the other variables.*
+
+```{r}
+radsmooth<- vars_long %>%
+  group_by(diagnosis, attribute) %>%
+  summarise(mean=mean(average), sd=sd(average), median=median(average)) %>%
+  arrange(attribute)
+radsmooth
+```
+
+**Graphing option 6:** *A boxplot with datapoints was used instead of a bar graph to maintain a comparison between diagnoses but to also visualize the distribution of datapoints. A logarithmic y scale was used, mostly to diversify the graphing options used in the assignment.*
+
+```{r}
+text_boxplot<- cancer_compact %>%
+  ggplot(aes(diagnosis, texture)) +
+  geom_boxplot(width=0.5, outlier.shape=NA) +
+  geom_jitter(alpha=0.3, width=0.1) +
+  scale_y_log10() +
+  labs(y = "Texture", x = "Diagnosis") + 
+  scale_x_discrete(labels = c("Benign", "Malignant")) +
+  theme(axis.title = element_text(size = 12, face = "bold")) +
+  theme(axis.text = element_text(face = "bold")) +
+  theme(axis.line = element_line(colour = "black", size = 0.5))
+text_boxplot
+```
+
+#### 4. How are the 3 attributes related to each other?
+
+**Summarize option 5:** *All 3 attributes were collapsed across diagnoses and summarized which provides a starting dataframe for stats on the total value of each characteristic irrespective of diagnosis.*
+
+```{r}
+smoothxtext<- vars_long %>% 
+  group_by(attribute) %>%
+  summarize(mean=mean(average), median=median(average), 
+            sd=sd(average), min=min(average), max=max(average))
+smoothxtext
+```
+
+**Graphing option 7:** *A simple scatterplot with a line of best fit shows the direction of the relationship between 2 of the 3 variables. Alpha was adjusted based on the heavy clustering of datapoints in the middle.*
+
+```{r}
+smooth_text_plot<- cancer_compact %>%
+  ggplot(aes(texture, smoothness)) +
+  geom_point(alpha=0.4) +
+  geom_smooth(method="lm")
+smooth_text_plot
+```
+
 <!----------------------------------------------------------------------------->
 
 ### 1.2 (3 points)
@@ -180,6 +418,11 @@ Make sure it's clear what research question you are doing each operation for!
 Based on the operations that you've completed, how much closer are you to answering your research questions? Think about what aspects of your research questions remain unclear. Can your research questions be refined, now that you've investigated your data a bit more? Which research questions are yielding interesting results?
 
 <!-------------------------- Start your work below ---------------------------->
+
+-   Question 1 requires a multivariate model to fully answer the question but the bar graph offers a quick comparison that suggests smoothness has no relation to diagnosis but both texture and radius can affect diagnosis.\
+-   Question 2 and 3 explore the results of question 1 at a more granular level, both the summary and graph suggest a direction for radius/texture on diagnosis but confirmatory analyses are required next.\
+-   Question 4 gives an indication of the relationship between 2 of the 3 variables but this is perfunctory and how each affects the others still remains to be uncovered.\
+-   Question 1, 2, and 3 are likely to be the most interesting but *how* the attributes are related to each other may also be of use if this analysis were trying to improve diagnostic tools in cancer research.
 
 <!----------------------------------------------------------------------------->
 
